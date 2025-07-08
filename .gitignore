@@ -1,0 +1,75 @@
+# Docker volumes
+data/
+volumes/
+*.volume/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+.npm
+.yarn
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.env
+.venv
+venv/
+ENV/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dossiers système
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE et éditeurs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Fichiers de base de données spécifiques
+*.sqlite3
+*.db
+
+# Fichiers de configuration Docker
+.dockerignore
+
+# Fichiers de sauvegarde
+*~
+*.bak
+*.backup

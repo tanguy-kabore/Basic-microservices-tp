@@ -1,0 +1,127 @@
+# Configuration Docker Compose
+
+services:
+  # Base de données MongoDB pour le monolithe et le service d'articles
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+      
+  # Base de données PostgreSQL pour le service de commentaires
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=comments
+
+  # Application monolithique
+  monolithe:
+    build: ./monolithe
+    container_name: monolithe
+    restart: always
+    # Port accessible uniquement en interne
+    expose:
+      - "3000"
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    environment:
+      - MONGODB_URI=mongodb://root:example@mongodb:27017/blogdb?authSource=admin
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Microservice des articles (Node.js avec MongoDB)
+  article-service:
+    build: ./microservices/article-service
+    container_name: article-service
+    restart: always
+    # Port accessible uniquement en interne
+    expose:
+      - "3001"
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    environment:
+      - MONGODB_URI=mongodb://root:example@mongodb:27017/articles?authSource=admin
+      - PORT=3001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Microservice des commentaires (Python avec PostgreSQL)
+  comment-service:
+    build: ./microservices/comment-service
+    container_name: comment-service
+    restart: always
+    # Port accessible uniquement en interne
+    expose:
+      - "3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/comments
+      - PORT=3002
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway
+  api-gateway:
+    build: ./microservices/api-gateway
+    container_name: api-gateway
+    restart: always
+    ports:
+      - "8081:8080"
+    depends_on:
+      - article-service
+      - comment-service
+    networks:
+      - app-network
+    environment:
+      - ARTICLE_SERVICE_URL=http://article-service:3001
+      - COMMENT_SERVICE_URL=http://comment-service:3002
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  postgres_data:
