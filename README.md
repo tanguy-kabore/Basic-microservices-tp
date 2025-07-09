@@ -179,6 +179,107 @@ curl -X GET http://localhost:8081/api/status
 - **Déploiement**: Quels sont les avantages des conteneurs pour le déploiement de microservices ?
 - **Monitoring**: Comment pourrait-on surveiller efficacement une architecture distribuée ?
 
+## 🐳 Commandes Docker Utiles
+
+Voici des commandes utiles pour interagir avec chaque conteneur Docker de l'application:
+
+### Commandes générales
+
+```bash
+# Lister tous les conteneurs en cours d'exécution
+docker ps
+
+# Afficher les logs de tous les services
+docker-compose logs
+
+# Redémarrer tous les services
+docker-compose restart
+```
+
+### API Gateway
+
+```bash
+# Afficher les logs de l'API Gateway
+docker logs api-gateway
+docker-compose logs api-gateway
+
+# Exécuter une commande dans le conteneur API Gateway
+docker exec -it api-gateway /bin/sh
+
+# Redémarrer uniquement l'API Gateway
+docker-compose restart api-gateway
+```
+
+### Service de Commentaires (Python/FastAPI)
+
+```bash
+# Afficher les logs du service de commentaires
+docker logs comment-service
+docker-compose logs comment-service
+
+# Exécuter une commande dans le conteneur du service de commentaires
+docker exec -it comment-service /bin/sh
+
+# Redémarrer uniquement le service de commentaires
+docker-compose restart comment-service
+```
+
+### Service d'Articles (Node.js)
+
+```bash
+# Afficher les logs du service d'articles
+docker logs article-service
+docker-compose logs article-service
+
+# Exécuter une commande dans le conteneur du service d'articles
+docker exec -it article-service /bin/sh
+
+# Redémarrer uniquement le service d'articles
+docker-compose restart article-service
+```
+
+### Monolithe
+
+```bash
+# Afficher les logs du monolithe
+docker logs monolithe
+docker-compose logs monolithe
+
+# Exécuter une commande dans le conteneur du monolithe
+docker exec -it monolithe /bin/sh
+
+# Redémarrer uniquement le monolithe
+docker-compose restart monolithe
+```
+
+### Bases de données
+
+```bash
+# MongoDB (utilisé par le monolithe et le service d'articles)
+docker exec -it mongodb mongosh
+docker exec -it mongodb bash -c "mongosh --eval 'db.getSiblingDB(\'blog\').articles.find({})'" 
+
+# PostgreSQL (utilisé par le service de commentaires)
+docker exec -it postgres psql -U postgres -d comments
+docker exec -it postgres bash -c "psql -U postgres -d comments -c 'SELECT * FROM comments'"
+```
+
+### Tester le circuit breaker
+
+```bash
+# Tester le circuit breaker du service d'articles
+curl -X POST http://localhost:8081/api/circuit-breaker/test/articleService
+
+# Tester le circuit breaker du service de commentaires
+curl -X POST http://localhost:8081/api/circuit-breaker/test/commentService
+
+# Vérifier l'état des circuit breakers
+curl -X GET http://localhost:8081/api/status
+
+# Réinitialiser le circuit breaker du service d'articles
+curl -X POST http://localhost:8081/api/circuit-breaker/reset/articleService
+```
+
 ## 📚 Ressources supplémentaires
 
 - [Martin Fowler - Microservices](https://martinfowler.com/articles/microservices.html)

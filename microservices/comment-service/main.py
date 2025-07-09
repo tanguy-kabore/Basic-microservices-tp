@@ -133,7 +133,7 @@ def health_check():
 
 # Route pour récupérer les commentaires d'un article
 @app.get("/api/articles/{article_id}/comments", response_model=List[CommentResponse])
-def get_comments_by_article(article_id: int, db: Session = Depends(get_db)):
+def get_comments_by_article(article_id: str, db: Session = Depends(get_db)):
     try:
         # Vérifier que l'article existe en appelant le service d'articles
         print(f"[COMMENT-SERVICE] Vérification de l'existence de l'article {article_id}")
@@ -160,7 +160,7 @@ def get_comments_by_article(article_id: int, db: Session = Depends(get_db)):
 
 # Route pour ajouter un commentaire à un article
 @app.post("/api/articles/{article_id}/comments", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
-def create_comment(article_id: int, comment: CommentCreate, db: Session = Depends(get_db)):
+def create_comment(article_id: str, comment: CommentCreate, db: Session = Depends(get_db)):
     try:
         # Vérifier que l'article existe en appelant le service d'articles
         print(f"[COMMENT-SERVICE] Vérification de l'existence de l'article {article_id} avant d'ajouter un commentaire")

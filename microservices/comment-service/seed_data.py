@@ -7,17 +7,15 @@ avec quelques commentaires de démonstration.
 Utilisation: python seed_data.py
 """
 
-import asyncio
 import os
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.future import select
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
+from sqlalchemy import text
 
-from models import Comment, Base
-from database import engine
+# Import de l'engine et Base depuis le module database
+from database import engine, Base, SessionLocal
+from models import Comment
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -49,35 +47,22 @@ sample_comments = [
     }
 ]
 
-async def seed_database():
+def seed_database():
     """Fonction pour remplir la base de données avec des données de test"""
+    print("[SEED] Starting database seeding process")
+    print(f"[SEED] Using database URL: {os.getenv('DATABASE_URL', 'default_url_not_set')}")
     print("[SEED] Création des tables dans la base de données PostgreSQL")
     
-    # Création des tables - version non asynchrone pour éviter les problèmes de compatibilité
-    # Cette approche fonctionne mieux dans certains environnements Docker
+    # Création des tables
     try:
-        Base.metadata.drop_all(bind=engine.sync_engine)
-        Base.metadata.create_all(bind=engine.sync_engine)
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
         print("[SEED] Tables créées avec succès")
     except Exception as e:
         print(f"[SEED] Erreur lors de la création des tables: {str(e)}")
-        # Alternative si la méthode sync_engine n'est pas disponible
-        try:
-            Base.metadata.drop_all(bind=engine)
-            Base.metadata.create_all(bind=engine)
-            print("[SEED] Tables créées avec succès (méthode alternative)")
-        except Exception as e2:
-            print(f"[SEED] Erreur avec la méthode alternative: {str(e2)}")
-            return
-    
-    # Session asynchrone avec gestion d'erreur améliorée
-    try:
-        async_session = sessionmaker(
-            engine, class_=AsyncSession, expire_on_commit=False
-        )
-    except Exception as e:
-        print(f"[SEED] Erreur lors de la création de la session: {str(e)}")
         return
+    
+    # Utilisation de la session déjà configurée dans database.py
     
     # Récupération des IDs d'articles depuis le service d'articles
     article_ids = []
@@ -102,41 +87,40 @@ async def seed_database():
         article_ids = ["60d21b4667d0d8992e610c85", "60d21b4667d0d8992e610c86", "60d21b4667d0d8992e610c87"]
         print("[SEED] Utilisation d'IDs d'articles par défaut")
     
-    # Ajout des commentaires dans la base de données - avec gestion d'erreurs améliorée
+    # Ajout des commentaires dans la base de données
     try:
         # Création de la session
-        session = async_session()
+        session = SessionLocal()
         
         try:
             # Suppression des commentaires existants
-            await session.execute("DELETE FROM comments")
+            session.execute(text("DELETE FROM comments"))
             
             # Pour chaque article, ajouter quelques commentaires
             for idx, article_id in enumerate(article_ids[:3]):  # Limite à 3 articles pour éviter trop de données
-                # Convertir l'ID MongoDB string en entier pour PostgreSQL
-                # On utilise simplement l'index comme ID pour simplifier
-                numeric_id = idx + 1
+                # Utiliser directement l'ID MongoDB string pour PostgreSQL
+                # Désormais article_id est une colonne de type String
                 
                 for comment_template in sample_comments:
                     comment = Comment(
-                        article_id=numeric_id,
+                        article_id=article_id,  # Utiliser l'ID MongoDB directement
                         content=comment_template["content"],
                         author=comment_template["author"]
                     )
                     session.add(comment)
                 
-                print(f"[SEED] Commentaires ajoutés pour l'article {article_id} (ID numérique: {numeric_id})")
+                print(f"[SEED] Commentaires ajoutés pour l'article {article_id}")
             
             # Validation des changements
-            await session.commit()
+            session.commit()
             print("[SEED] Tous les commentaires ont été ajoutés avec succès")
             
         except Exception as e:
-            await session.rollback()
+            session.rollback()
             print(f"[SEED] Erreur lors de l'ajout des commentaires: {str(e)}")
         finally:
             # Fermeture de la session dans tous les cas
-            await session.close()
+            session.close()
             
     except Exception as e:
         print(f"[SEED] Erreur lors de l'initialisation de la session: {str(e)}")
@@ -144,4 +128,5 @@ async def seed_database():
     print("[SEED] Opération terminée avec succès")
 
 if __name__ == "__main__":
-    asyncio.run(seed_database())
+    # Exécution de la fonction d'initialisation des données
+    seed_database()

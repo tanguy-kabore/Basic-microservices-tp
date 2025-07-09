@@ -585,20 +585,42 @@ app.get('/', (req, res) => {
         // Fonction pour tester un Circuit Breaker
         async function testCircuitBreaker(service) {
           try {
-            await fetch('/api/circuit-breaker/test/' + service, { method: 'POST' });
+            // Utiliser le chemin absolu pour s'assurer que la requête est envoyée à la bonne URL
+            const response = await fetch(window.location.origin + '/api/circuit-breaker/test/' + service, { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            // Afficher le résultat du test
+            const result = await response.json();
+            alert(result.message);
+            
+            // Actualiser le statut après le test
             refreshStatus();
           } catch (error) {
             console.error('Erreur lors du test du Circuit Breaker:', error);
+            alert('Erreur lors du test du Circuit Breaker: ' + error.message);
           }
         }
         
         // Fonction pour réinitialiser un Circuit Breaker
         async function resetCircuitBreaker(service) {
           try {
-            await fetch('/api/circuit-breaker/reset/' + service, { method: 'POST' });
+            // Utiliser le chemin absolu pour s'assurer que la requête est envoyée à la bonne URL
+            const response = await fetch(window.location.origin + '/api/circuit-breaker/reset/' + service, { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            // Afficher le résultat de la réinitialisation
+            const result = await response.json();
+            alert(result.message);
+            
+            // Actualiser le statut après la réinitialisation
             refreshStatus();
           } catch (error) {
             console.error('Erreur lors de la réinitialisation du Circuit Breaker:', error);
+            alert('Erreur lors de la réinitialisation du Circuit Breaker: ' + error.message);
           }
         }
         

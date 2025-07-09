@@ -11,7 +11,7 @@ class CommentCreate(CommentBase):
 
 class CommentResponse(CommentBase):
     id: int
-    article_id: int
+    article_id: str
     created_at: datetime
 
     class Config:
